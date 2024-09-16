@@ -1,0 +1,75 @@
+@startuml
+'https://plantuml.com/component-diagram
+'!theme vibrant
+'!theme reddress-darkorange=
+skinparam stereotypeCBackgroundColor YellowGreen
+skinparam component {
+BackgroundColor YellowGreen
+BackgroundColor<<DTO>> PaleGreen
+BackgroundColor<<Model>> LimeGreen
+BackgroundColor<<Entity>> OliveDrab
+BackgroundColor<<I>> Yellow
+}
+
+
+package "ports" {
+    package "in" {
+        [InstrumentDto] <<DTO>>
+        [PredictionDto] <<DTO>> as PredictionInDto
+        [PredictionPortIn] <<I>>
+        [PredictionPortIn] --> [InstrumentDto]
+        [PredictionPortIn] --> [PredictionInDto]
+    }
+
+    package "out" {
+        [LlmPortOut] <<I>>
+        together {
+            [PredictionDto] <<DTO>> as PredictionOutDto
+            [InstrumentDto] <<DTO>> as InstrumentOutDto
+            [PredictionRepositoryPortOut] <<I>>
+            [PredictionRepositoryPortOut] --> [PredictionOutDto]
+            [PredictionRepositoryPortOut] --> [InstrumentOutDto]
+        }
+    }
+}
+
+package "api" {
+    package "dto" {
+        [PredictionRequest] <<DTO>>
+        [PredictionResponse] <<DTO>>
+    }
+  [PredictionApi]
+  [PredictionApi] --> [PredictionRequest]
+  [PredictionApi] --> [PredictionResponse]
+  [PredictionApi] ----> [PredictionPortIn] : predict
+  [PredictionApi] --> [InstrumentDto]
+  [PredictionApi] --> [PredictionInDto]
+}
+
+package "domain" {
+  [PredictionService] ----* [PredictionPortIn]
+  [PredictionService] --> [LlmPortOut] : inference
+  [PredictionService] ---> [PredictionRepositoryPortOut] : save
+  [PredictionService] --> [InstrumentDto]
+  [PredictionService] --> [PredictionInDto]
+  [PredictionService] --> [PredictionOutDto]
+}
+
+package "adapters" {
+    package storage {
+        package "entity" {
+            [PredictionEntity] <<Entity>>
+        }
+      [PredictionRepository] --> [PredictionEntity]
+      [PredictionRepository] ----* [PredictionRepositoryPortOut]
+      [PredictionRepository] --> [PredictionOutDto]
+     }
+  package llm {
+    [ExternalLlmAdapter] ----* [LlmPortOut]
+  }
+}
+
+HTTP --> [PredictionApi] : call
+
+
+@enduml

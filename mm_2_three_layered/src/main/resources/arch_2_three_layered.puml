@@ -1,0 +1,47 @@
+@startuml
+'https://plantuml.com/component-diagram
+'!theme vibrant
+'!theme reddress-darkorange=
+skinparam stereotypeCBackgroundColor YellowGreen
+skinparam component {
+BackgroundColor YellowGreen
+BackgroundColor<<DTO>> PaleGreen
+BackgroundColor<<Model>> LimeGreen
+BackgroundColor<<Entity>> OliveDrab
+}
+
+package "api" {
+    package "dto" {
+        [PredictionRequest] <<DTO>>
+        [PredictionResponse] <<DTO>>
+    }
+  [PredictionApi]
+  [PredictionApi] --> [PredictionRequest]
+  [PredictionApi] --> [PredictionResponse]
+}
+
+package "service" {
+    package "model" {
+        [Instrument] <<Model>>
+        [Prediction] <<Model>>
+    }
+  [PredictionService] --> [LocalLLmService] : inference
+  [PredictionService] --> [Instrument]
+  [PredictionService] --> [Prediction]
+}
+
+package "infrastructure" {
+    package "entity" {
+        [PredictionEntity] <<Entity>>
+    }
+  [PredictionRepository] --> [PredictionEntity]
+}
+
+HTTP --> [PredictionApi] : call
+[PredictionApi] ====> [PredictionService] : predict
+[PredictionApi] --> [Instrument]
+[PredictionApi] --> [Prediction]
+[PredictionService] ====> [PredictionRepository] : save
+[PredictionService] --> [PredictionEntity]
+
+@enduml
